@@ -2,7 +2,7 @@
 //!
 //! A basic music theory library.
 
-// #![warn(missing_docs)]
+#![warn(missing_docs)]
 
 use std::f64::consts::PI;
 
