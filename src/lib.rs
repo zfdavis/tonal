@@ -1,19 +1,76 @@
+//! # Tonic
+//!
+//! A basic music theory library.
+
+// #![warn(missing_docs)]
+
 use std::f64::consts::PI;
 
-#[derive(Clone, Copy)]
+/// Represents a musical pitch.
+///
+/// The pitch is stored as the number of half steps away from A4. It is valid
+/// to use the tuple constructor to create a pitch directly. In fact, this
+/// allows doing math on notes for programatic contruction of music.
+///
+/// The implementation of `Default` produces A4.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialOrd, PartialEq)]
 pub struct Pitch(pub i32);
 
 impl Pitch {
-    pub fn new(name: Name, octave: i32) -> Self {
-        Self((octave - 4) * 12 + name as i32)
+    /// Creates a new pitch with the given note name and octave.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let a4 = tonic::Pitch::new(tonic::Name::A, 4);
+    /// assert_eq!(a4, tonic::Pitch::default());
+    /// let c3 = tonic::Pitch::new(tonic::Name::C, 3);
+    /// assert_eq!(c3, tonic::Pitch(-21));
+    /// ```
+    pub fn new(name: Name, octave: u8) -> Self {
+        Self((i32::from(octave) - 4) * 12 + name as i32 - 9)
     }
 
+    /// Creates a new pitch from the given frequency in hertz.
+    ///
+    ///
+    /// Because this function uses floating point math, there is a *small*
+    /// chance the result might be off.
+    /// 
+    /// # Panics
+    ///
+    /// Panics if `freq` is not greater than 0.
+    /// 
+    /// # Examples
+    ///
+    /// ```
+    /// let a4 = tonic::Pitch::new_from_freq(440.0);
+    /// assert_eq!(a4, tonic::Pitch::new(tonic::Name::A, 4));
+    /// let c3 = tonic::Pitch::new_from_freq(130.81);
+    /// assert_eq!(c3, tonic::Pitch::new(tonic::Name::C, 3));
+    /// ```
+    /// 
+    /// This example will panic when run:
+    /// 
+    /// ```should_panic
+    /// let invalid = tonic::Pitch::new_from_freq(0.0);
+    /// ```
     pub fn new_from_freq(freq: f64) -> Self {
+        assert!(freq > 0.0, "Frequency must be greater than 0");
         Self((12.0 * (freq / 440.0).log2()).round() as i32)
     }
 
+    /// Calculates the frequency in hertz.
+    ///
+    /// # Examples
+    /// 
+    /// ```
+    /// let a4_freq = tonic::Pitch::default().freq();
+    /// assert!((a4_freq - 440.0).abs() < std::f64::EPSILON);
+    /// ```
     pub fn freq(self) -> f64 {
-        55.0 * 2f64.powf(3.0 + f64::from(self.0) / 12.0)
+        let b = 2f64.powf(12f64.recip());
+        440.0 * b.powi(self.0)
     }
 }
 
@@ -119,10 +176,7 @@ impl Duration {
 #[derive(Clone, Copy)]
 #[repr(i32)]
 pub enum Name {
-    A = 0,
-    AS,
-    B,
-    C,
+    C = 0,
     CS,
     D,
     DS,
@@ -131,4 +185,7 @@ pub enum Name {
     FS,
     G,
     GS,
+    A,
+    AS,
+    B,
 }
