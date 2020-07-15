@@ -1,6 +1,6 @@
 //! # Tonic
 //!
-//! A basic music theory library.
+//! A basic music theory and synthesis library.
 
 #![warn(missing_docs)]
 
