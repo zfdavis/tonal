@@ -156,14 +156,18 @@ impl Chord {
 }
 
 /// Represents the length of a musical note.
-#[allow(missing_docs)]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialOrd, PartialEq)]
 #[repr(i32)]
 pub enum Length {
+    /// A sixteenth of a whole note.
     Sixteenth = 2,
+    /// An eigth of a whole note.
     Eigth = 1,
+    /// A quarter of a whole note.
     Quarter = 0,
+    /// A half of a whole note.
     Half = -1,
+    /// A whole note.
     Whole = -2,
 }
 
@@ -192,16 +196,28 @@ impl Length {
 #[derive(Clone, Copy)]
 #[repr(i32)]
 pub enum Name {
+    /// A.
     A = 9,
+    /// A sharp / B flat.
     AS = 10,
+    /// B.
     B = 11,
+    /// C.
     C = 0,
+    /// C sharp / D flat.
     CS = 1,
+    /// D.
     D = 2,
+    /// D sharp / E flat.
     DS = 3,
+    /// E.
     E = 4,
+    /// F.
     F = 5,
+    /// F sharp / G flat.
     FS = 6,
+    /// G.
     G = 7,
+    /// G sharp / A flat.
     GS = 8,
 }
