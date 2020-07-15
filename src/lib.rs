@@ -21,7 +21,7 @@ pub struct Pitch(pub i32);
 
 impl Pitch {
     /// Creates a new pitch with the given note name and octave.
-    ///
+    /// 
     /// # Examples
     ///
     /// ```
