@@ -3,6 +3,7 @@
 //! A basic music theory and synthesis library.
 
 #![warn(missing_docs)]
+#![doc(html_root_url = "https://docs.rs/tonal/0.1.2")]
 
 mod synth;
 
