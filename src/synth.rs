@@ -11,7 +11,7 @@ pub struct Samples<'a> {
 }
 
 impl<'a> Samples<'a> {
-    pub(crate) fn new(
+    pub fn new(
         current: u32,
         max: u32,
         pitches: &'a [Pitch],
