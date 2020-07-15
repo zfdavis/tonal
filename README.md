@@ -1,5 +1,5 @@
-# tonic
+# Tonal
 
 A Rust music theory library.
 
-![Rust](https://github.com/zfdavis/tonic/workflows/Rust/badge.svg)
+![Rust](https://github.com/zfdavis/tonal/workflows/Rust/badge.svg)

@@ -1,4 +1,4 @@
-//! # Tonic
+//! # Tonal
 //!
 //! A basic music theory and synthesis library.
 
@@ -25,7 +25,7 @@ impl Pitch {
     /// # Examples
     ///
     /// ```
-    /// use tonic::*;
+    /// use tonal::*;
     ///
     /// let a4 = Pitch::new(Name::A, 4);
     /// assert_eq!(a4, Pitch::default());
@@ -48,7 +48,7 @@ impl Pitch {
     /// # Examples
     ///
     /// ```
-    /// use tonic::*;
+    /// use tonal::*;
     ///
     /// let a4 = Pitch::new_from_freq(440.0);
     /// assert_eq!(a4, Pitch::new(Name::A, 4));
@@ -59,7 +59,7 @@ impl Pitch {
     /// This example will panic when run:
     ///
     /// ```should_panic
-    /// use tonic::*;
+    /// use tonal::*;
     ///
     /// let invalid = Pitch::new_from_freq(0.0);
     /// ```
@@ -73,7 +73,7 @@ impl Pitch {
     /// # Examples
     ///
     /// ```
-    /// use tonic::*;
+    /// use tonal::*;
     ///
     /// let a4 = Pitch::default();
     /// assert!((a4.freq() - 440.0).abs() < std::f64::EPSILON);
@@ -114,7 +114,7 @@ impl Chord {
     /// # Examples
     ///
     /// ```
-    /// use tonic::*;
+    /// use tonal::*;
     ///
     /// let c4 = Pitch::new(Name::C, 4);
     /// let c_maj = Chord::new_major(c4, Length::Whole, 0.5);
@@ -177,7 +177,7 @@ impl Length {
     /// # Examples
     ///
     /// ```
-    /// use tonic::*;
+    /// use tonal::*;
     /// use std::time::Duration;
     ///
     /// let bpm = 60.0;
