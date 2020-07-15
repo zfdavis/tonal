@@ -4,7 +4,10 @@
 
 #![warn(missing_docs)]
 
-use std::f64::consts::PI;
+mod synth;
+
+use std::time::Duration;
+use synth::Samples;
 
 /// Represents a musical pitch.
 ///
@@ -22,10 +25,12 @@ impl Pitch {
     /// # Examples
     ///
     /// ```
-    /// let a4 = tonic::Pitch::new(tonic::Name::A, 4);
-    /// assert_eq!(a4, tonic::Pitch::default());
-    /// let c3 = tonic::Pitch::new(tonic::Name::C, 3);
-    /// assert_eq!(c3, tonic::Pitch(-21));
+    /// use tonic::*;
+    ///
+    /// let a4 = Pitch::new(Name::A, 4);
+    /// assert_eq!(a4, Pitch::default());
+    /// let c3 = Pitch::new(Name::C, 3);
+    /// assert_eq!(c3, Pitch(-21));
     /// ```
     pub fn new(name: Name, octave: u8) -> Self {
         Self((i32::from(octave) - 4) * 12 + name as i32 - 9)
@@ -33,27 +38,30 @@ impl Pitch {
 
     /// Creates a new pitch from the given frequency in hertz.
     ///
-    ///
     /// Because this function uses floating point math, there is a *small*
     /// chance the result might be off.
-    /// 
+    ///
     /// # Panics
     ///
     /// Panics if `freq` is not greater than 0.
-    /// 
+    ///
     /// # Examples
     ///
     /// ```
-    /// let a4 = tonic::Pitch::new_from_freq(440.0);
-    /// assert_eq!(a4, tonic::Pitch::new(tonic::Name::A, 4));
-    /// let c3 = tonic::Pitch::new_from_freq(130.81);
-    /// assert_eq!(c3, tonic::Pitch::new(tonic::Name::C, 3));
+    /// use tonic::*;
+    ///
+    /// let a4 = Pitch::new_from_freq(440.0);
+    /// assert_eq!(a4, Pitch::new(Name::A, 4));
+    /// let c3 = Pitch::new_from_freq(130.81);
+    /// assert_eq!(c3, Pitch::new(Name::C, 3));
     /// ```
-    /// 
+    ///
     /// This example will panic when run:
-    /// 
+    ///
     /// ```should_panic
-    /// let invalid = tonic::Pitch::new_from_freq(0.0);
+    /// use tonic::*;
+    ///
+    /// let invalid = Pitch::new_from_freq(0.0);
     /// ```
     pub fn new_from_freq(freq: f64) -> Self {
         assert!(freq > 0.0, "Frequency must be greater than 0");
@@ -63,10 +71,12 @@ impl Pitch {
     /// Calculates the frequency in hertz.
     ///
     /// # Examples
-    /// 
+    ///
     /// ```
-    /// let a4_freq = tonic::Pitch::default().freq();
-    /// assert!((a4_freq - 440.0).abs() < std::f64::EPSILON);
+    /// use tonic::*;
+    ///
+    /// let a4 = Pitch::default();
+    /// assert!((a4.freq() - 440.0).abs() < std::f64::EPSILON);
     /// ```
     pub fn freq(self) -> f64 {
         let b = 2f64.powf(12f64.recip());
@@ -74,118 +84,124 @@ impl Pitch {
     }
 }
 
+/// Represents a pitch or group of pitches with shared volume and length.
+///
+/// The reason both chords and single notes are represented by the same strcut
+/// is because I don't know of a better way of doing it without duplicating
+/// code.
+#[derive(Clone, Debug, PartialEq)]
 pub struct Chord {
     pitches: Vec<Pitch>,
-    duration: Duration,
+    length: Length,
     volume: f64,
 }
 
 impl Chord {
-    pub fn new(root: Pitch, duration: Duration, volume: f64) -> Self {
+    /// Creates a new chord.
+    pub fn new(pitches: Vec<Pitch>, length: Length, volume: f64) -> Self {
         Self {
-            pitches: vec![root],
-            duration,
+            pitches,
+            length,
             volume,
         }
     }
 
-    pub fn new_major(root: Pitch, duration: Duration, volume: f64) -> Self {
-        Self {
-            pitches: vec![root, Pitch(root.0 + 4), Pitch(root.0 + 7)],
-            duration,
+    /// Creates a new major chord based off of the root.
+    ///
+    /// This will construct a major chord by including the root, the pitch a
+    /// major third above it, and the pitch a perfect fifth above it.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tonic::*;
+    ///
+    /// let c4 = Pitch::new(Name::C, 4);
+    /// let c_maj = Chord::new_major(c4, Length::Whole, 0.5);
+    /// let correct = [c4, Pitch::new(Name::E, 4), Pitch::new(Name::G, 4)];
+    /// assert_eq!(c_maj.pitches(), &correct);
+    /// ```
+    pub fn new_major(root: Pitch, length: Length, volume: f64) -> Self {
+        Self::new(
+            vec![root, Pitch(root.0 + 4), Pitch(root.0 + 7)],
+            length,
             volume,
-        }
+        )
     }
 
+    /// Allows access to the pitches in this chord.
+    pub fn pitches(&self) -> &[Pitch] {
+        &self.pitches
+    }
+
+    /// Allows mutable access to the pitches in this chord.
+    pub fn pitches_mut(&mut self) -> &mut Vec<Pitch> {
+        &mut self.pitches
+    }
+
+    /// Returns an iterator of PCM samples representing this chord.
+    ///
+    /// This is mostly useful for music playback.
     pub fn samples(&self, bpm: f64, rate: u32) -> Samples<'_> {
         let rate = f64::from(rate);
 
-        Samples {
-            current: 0,
-            max: (self.duration.secs(bpm) * rate).round() as u32,
-            pitches: &self.pitches,
+        Samples::new(
+            0,
+            (self.length.duration(bpm).as_secs_f64() * rate).round() as u32,
+            &self.pitches,
             rate,
-            volume: self.volume * 8_192.0,
-        }
+            self.volume * 8_192.0,
+        )
     }
 }
 
-pub struct Samples<'a> {
-    current: u32,
-    max: u32,
-    pitches: &'a [Pitch],
-    rate: f64,
-    volume: f64,
-}
-
-impl ExactSizeIterator for Samples<'_> {}
-
-impl Iterator for Samples<'_> {
-    type Item = i16;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.current >= self.max {
-            return None;
-        }
-
-        let time = f64::from(self.current) / self.rate;
-
-        let sample = self
-            .pitches
-            .iter()
-            .map(|pitch| {
-                let f = pitch.freq();
-
-                (1..=4i32)
-                    .map(|h| {
-                        let f = f * f64::from(h);
-                        let v = self.volume / 2f64.powi(h - 1);
-                        ((time * 2.0 * PI * f).sin() * v) as i16
-                    })
-                    .sum::<i16>()
-            })
-            .sum();
-
-        self.current += 1;
-
-        Some(sample)
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let size = (self.max - self.current) as usize;
-        (size, Some(size))
-    }
-}
-
-#[derive(Clone, Copy)]
+/// Represents the length of a musical note.
+#[allow(missing_docs)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialOrd, PartialEq)]
 #[repr(i32)]
-pub enum Duration {
+pub enum Length {
+    Sixteenth = 2,
+    Eigth = 1,
+    Quarter = 0,
+    Half = -1,
     Whole = -2,
-    Half,
-    Quarter,
-    Eigth,
-    Sixteenth,
 }
 
-impl Duration {
-    pub fn secs(self, bpm: f64) -> f64 {
-        60.0 / (bpm * 2f64.powi(self as i32))
+impl Length {
+    /// Calculates the time needed for a length in a ceratin BPM.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tonic::*;
+    /// use std::time::Duration;
+    ///
+    /// let bpm = 60.0;
+    /// let whole = Length::Whole;
+    /// assert_eq!(whole.duration(bpm), Duration::from_secs(4));
+    /// ```
+    pub fn duration(self, bpm: f64) -> Duration {
+        Duration::from_secs_f64(60.0 / (bpm * 2f64.powi(self as i32)))
     }
 }
 
+/// Represents the alphabetic name of a pitch.
+///
+/// The 'S' means 'Sharp'.
+#[allow(missing_docs)]
 #[derive(Clone, Copy)]
 #[repr(i32)]
 pub enum Name {
+    A = 9,
+    AS = 10,
+    B = 11,
     C = 0,
-    CS,
-    D,
-    DS,
-    E,
-    F,
-    FS,
-    G,
-    GS,
-    A,
-    AS,
-    B,
+    CS = 1,
+    D = 2,
+    DS = 3,
+    E = 4,
+    F = 5,
+    FS = 6,
+    G = 7,
+    GS = 8,
 }
