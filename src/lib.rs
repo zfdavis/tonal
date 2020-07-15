@@ -15,7 +15,9 @@ use synth::Samples;
 /// to use the tuple constructor to create a pitch directly. In fact, this
 /// allows doing math on notes for programatic contruction of music.
 ///
-/// The implementation of `Default` produces A4.
+/// The implementation of
+/// [`Default`](https://doc.rust-lang.org/std/default/trait.Default.html)
+/// produces A4.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialOrd, PartialEq)]
 pub struct Pitch(pub i32);
 
